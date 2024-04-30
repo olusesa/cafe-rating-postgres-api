@@ -22,7 +22,7 @@ UPDATE_EMAIL_BY_ID = "UPDATE api_users SET email = %s WHERE id = %s;"
 UPDATE_PHONE_BY_ID = "UPDATE api_users SET phone = %s WHERE id = %s;"
 DELETE_USER_BY_ID = "DELETE FROM api_users WHERE id = %s;"
 
-@app.route("/add/user/<username>", methods=["POST"])
+@app.route("/add/user/<username>", endpoint='create_user', methods=["POST"])
 def create_user(username):
     data = request.get_json()
     name = data["name"]
@@ -49,7 +49,7 @@ def get_all_users():
             else:
                 return jsonify({"error": f"Users not found."}), 404
 
-@app.route("/search/user/<int:user_id>", methods=["GET"])
+@app.route("/search/user/<int:user_id>", endpoint='get_user', methods=["GET"])
 def get_user(user_id):
     with connection:
         with connection.cursor() as cursor:
@@ -61,8 +61,23 @@ def get_user(user_id):
                 return jsonify({"error": f"User with ID {user_id} not found."}), 404
 
 
-@app.route("/update/user/<int:user_id>", methods=["PUT"])
-def update_user(user_id):
+@app.route("/update/user-entries/<int:user_id>", endpoint='update_user_entries', methods=["PUT"])
+def update_user_entries(user_id):
+    data = request.get_json()
+    username = data["username"]
+    name = data["name"]
+    email = data["email"]
+    phone = data["phone"]
+    with connection:
+        with connection.cursor() as cursor:
+            cursor.execute(UPDATE_USERNAME_BY_ID, (username, name, email, phone, user_id))
+            if cursor.rowcount == 0:
+                return jsonify({"error": f"User with ID {user_id} not found."}), 404
+    return jsonify({"id": user_id, "username": username, "name": name, "email": email, "phone": phone,
+                    "message": f"User {username} entries updated successfully."})
+
+@app.route("/update/username/<int:user_id>", endpoint='update_username_entry', methods=["PATCH"])
+def update_username_entry(user_id):
     data = request.get_json()
     username = data["username"]
     with connection:
@@ -72,19 +87,8 @@ def update_user(user_id):
                 return jsonify({"error": f"User with ID {user_id} not found."}), 404
     return jsonify({"id": user_id, "username": username, "message": f"User with ID {user_id} and username : {username} updated successfully."})
 
-@app.route("/update/user/<int:user_id>", methods=["PATCH"])
-def update_user(user_id):
-    data = request.get_json()
-    username = data["username"]
-    with connection:
-        with connection.cursor() as cursor:
-            cursor.execute(UPDATE_USERNAME_BY_ID, (username, user_id))
-            if cursor.rowcount == 0:
-                return jsonify({"error": f"User with ID {user_id} not found."}), 404
-    return jsonify({"id": user_id, "username": username, "message": f"User with ID {user_id} and username : {username} updated successfully."})
-
-@app.route("/update/user/<int:user_id>", methods=["PATCH"])
-def update_user(user_id):
+@app.route("/update/user-email/<int:user_id>", endpoint='update_email_entry', methods=["PATCH"])
+def update_email_entry(user_id):
     data = request.get_json()
     email = data["email"]
     with connection:
@@ -95,8 +99,8 @@ def update_user(user_id):
     return jsonify({"id": user_id, "email": email, "message": f"User with ID {user_id} and email : {email} updated successfully."})
 
 
-@app.route("/update/user/<int:user_id>", methods=["PATCH"])
-def update_user(user_id):
+@app.route("/update/user-phone/<int:user_id>", endpoint='update_phone_entry', methods=["PATCH"])
+def update_phone_entry(user_id):
     data = request.get_json()
     phone = data["phone"]
     with connection:
