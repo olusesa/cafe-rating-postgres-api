@@ -4,6 +4,7 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 url = os.getenv("DATABASE_URL")
+app.config['SECRET_KEY'] = os.environ.get('FLASK_KEY')
 connection = psycopg2.connect(url)
 
 CREATE_USERS_TABLE = "CREATE TABLE IF NOT EXISTS api_users (id SERIAL PRIMARY KEY, username TEXT, email TEXT, phone TEXT, name TEXT);"
