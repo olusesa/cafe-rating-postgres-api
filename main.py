@@ -124,8 +124,6 @@ def update_location_entry(cafe_id):
             return jsonify({"error": f"Cafe shop with ID {cafe_id} not found."}), 404
     return jsonify({"id": cafe_id, "location": location, "message": f"Cafe shop with ID {cafe_id} and "
                                                                 f"location : {location} updated successfully."})
-
-
 @app.route("/update/cafe-shop/<int:cafe_id>", endpoint='update_open_entry', methods=["PATCH"])
 def update_open_entry(cafe_id):
     data = request.get_json()
@@ -142,13 +140,13 @@ def update_open_entry(cafe_id):
 def update_close_entry(cafe_id):
     data = request.get_json()
     close = data["close"]
-        with connection:
-            with connection.cursor() as cursor:
-                cursor.execute(UPDATE_CAFE_CLOSE_BY_ID, (cafe_id, close))
-            if cursor.rowcount == 0:
-                return jsonify({"error": f"Cafe shop with ID {cafe_id} not found."}), 404
-        return jsonify({"id": cafe_id, "close": close, "message": f"User with ID {cafe_id} "
-                                                            f"and close : {close} updated successfully."})
+    with connection:
+        with connection.cursor() as cursor:
+            cursor.execute(UPDATE_CAFE_CLOSE_BY_ID, (cafe_id, close))
+        if cursor.rowcount == 0:
+            return jsonify({"error": f"Cafe shop with ID {cafe_id} not found."}), 404
+    return jsonify({"id": cafe_id, "close": close, "message": f"User with ID {cafe_id} "
+                                                        f"and close : {close} updated successfully."})
 
 @app.route("/update/cafe-shop/<int:cafe_id>", endpoint='update_coffe_rating_entry', methods=["PATCH"])
 def update_coffee_rating_entry(cafe_id):
