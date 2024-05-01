@@ -45,9 +45,8 @@ def create_cafe_shop(cafe_username):
     power_rating = data["power_rating"]
     with connection:
         with connection.cursor() as cursor:
-            cursor.execute(INSERT_CAFE_SHOP_RETURN_ID, (cafe_username.data, cafe.data, location.data,
-                                                        open.data, close.data, coffee_rating.data,
-                                                        wifi_rating.data, power_rating.data))
+            cursor.execute(INSERT_CAFE_SHOP_RETURN_ID, (cafe_username, cafe, location, open, close, coffee_rating,
+                                                        wifi_rating, power_rating))
             user_id = cursor.fetchone()[0]
     return {"id": user_id, "cafe_username": cafe_username, "cafe": "cafe",
             "message": f"Cafe with Cafe username:  {cafe_username} created successfully."}, 201
