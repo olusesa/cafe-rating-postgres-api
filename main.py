@@ -7,118 +7,192 @@ url = os.getenv("DATABASE_URL")
 app.config['SECRET_KEY'] = os.environ.get('FLASK_KEY')
 connection = psycopg2.connect(url)
 
-CREATE_USERS_TABLE = "CREATE TABLE IF NOT EXISTS api_users (id SERIAL PRIMARY KEY, username TEXT, email TEXT, phone TEXT, name TEXT);"
+CREATE_CAFE_SHOPS_TABLE = ("CREATE TABLE IF NOT EXISTS cafe_shops (id SERIAL PRIMARY KEY, cafe_username TEXT, "
+                           "cafe TEXT, location TEXT, open TEXT, close TEXT, coffee_rating TEXT, wifi_rating TEXT, "
+                           "power_rating TEXT);")
 
 with connection:
     with connection.cursor() as cursor:
-        cursor.execute(CREATE_USERS_TABLE)
+        cursor.execute(CREATE_CAFE_SHOPS_TABLE)
 
-INSERT_USER_RETURN_ID = "INSERT INTO api_users (username, name, email, phone) VALUES (%s, %s, %s, %s) RETURNING id;"
-SELECT_ALL_USERS = "SELECT * FROM api_users;"
-SELECT_USER_BY_ID = "SELECT id, username, name, email, phone FROM api_users WHERE id = %s;"
-UPDATE_NAME_BY_ID = "UPDATE api_users SET name = %s WHERE id = %s;"
-UPDATE_USERNAME_BY_ID = "UPDATE api_users SET username = %s WHERE id = %s;"
-UPDATE_EMAIL_BY_ID = "UPDATE api_users SET email = %s WHERE id = %s;"
-UPDATE_PHONE_BY_ID = "UPDATE api_users SET phone = %s WHERE id = %s;"
-DELETE_USER_BY_ID = "DELETE FROM api_users WHERE id = %s;"
+INSERT_CAFE_SHOP_RETURN_ID = ("INSERT INTO cafe_shops (cafe_username, cafe, location, open, close, "
+                              "coffee_rating, wifi_rating, power_rating) "
+                              "VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id;")
+SELECT_ALL_CAFE_SHOPS = "SELECT * FROM cafe_shops;"
+SELECT_CAFE_SHOPS_BY_ID = ("SELECT id, cafe_username, cafe, location, open, close, coffee_rating, coffee_rating, "
+                           "power_rating FROM cafe_shops WHERE id = %s;")
+UPDATE_CAFE_USERNAME_BY_ID = "UPDATE cafe_shops SET cafe_username = %s WHERE id = %s;"
+UPDATE_CAFE_SHOPS_BY_ID = "UPDATE cafe_shops SET cafe = %s WHERE id = %s;"
+UPDATE_CAFE_LOCATION_BY_ID = "UPDATE cafe_shops SET location = %s WHERE id = %s;"
+UPDATE_CAFE_OPEN_BY_ID = "UPDATE cafe_shops SET open = %s WHERE id = %s;"
+UPDATE_CAFE_CLOSE_BY_ID = "UPDATE cafe_shops SET close = %s WHERE id = %s;"
+UPDATE_CAFE_COFFE_RATING_BY_ID = "UPDATE cafe_shops SET coffee_rating = %s WHERE id = %s;"
+UPDATE_CAFE_WIFI_RATING_BY_ID = "UPDATE cafe_shops SET wifi_rating = %s WHERE id = %s;"
+UPDATE_CAFE_POWER_RATING_BY_ID = "UPDATE cafe_shops SET power_rating = %s WHERE id = %s;"
+DELETE_CAFE_SHOP_BY_ID = "DELETE FROM cafe_shops WHERE id = %s;"
 
-@app.route("/add/user/<username>", endpoint='create_user', methods=["POST"])
-def create_user(username):
+
+@app.route("/add/cafe-shop/<cafe_username>", endpoint='create_cafe_shop', methods=["POST"])
+def create_cafe_shop(cafe_username):
     data = request.get_json()
-    name = data["name"]
-    username = data["username"]
-    email = data["email"]
-    phone = data["phone"]
+    cafe_username = data["cafe_username"]
+    cafe = data["cafe"]
+    location = data["location"]
+    open = data["open"]
+    close = data["close"]
+    coffee_rating = data["coffee_rating"]
+    wifi_rating = data["wifi_rating"]
+    power_rating = data["power_rating"]
     with connection:
         with connection.cursor() as cursor:
-            cursor.execute(INSERT_USER_RETURN_ID, (username,name,email,phone))
+            cursor.execute(INSERT_CAFE_SHOP_RETURN_ID, (cafe_username.data, cafe.data, location.data,
+                                                        open.data, close.data, coffee_rating.data,
+                                                        wifi_rating.data, power_rating.data))
             user_id = cursor.fetchone()[0]
-    return {"id": user_id, "name": name, "email": email, "phone": phone, "message": f"Username:  {username} created successfully."}, 201
+    return {"id": user_id, "cafe_username": cafe_username, "cafe": "cafe",
+            "message": f"Cafe with Cafe username:  {cafe_username} created successfully."}, 201
 
 @app.route("/", methods=["GET"])
-def get_all_users():
+def get_all_cafe_shops():
     with connection:
         with connection.cursor() as cursor:
-            cursor.execute(SELECT_ALL_USERS)
-            users = cursor.fetchall()
-            if users:
+            cursor.execute(SELECT_ALL_CAFE_SHOPS)
+            cafe_shops = cursor.fetchall()
+            if cafe_shops:
                 result = []
-                for user in users:
-                    result.append({"id": user[0], "username": user[1]})
+                for cafe_shop in cafe_shops:
+                    result.append({"id": cafe_shop[0], "cafe_username": cafe_shop[1], "cafe": cafe_shop[2]})
                 return jsonify(result)
             else:
-                return jsonify({"error": f"Users not found."}), 404
+                return jsonify({"error": f"cafe_shops not found."}), 404
 
-@app.route("/search/user/<int:user_id>", endpoint='get_user', methods=["GET"])
-def get_user(user_id):
+
+@app.route("/search/cafe-shop/<int:cafe_id>", endpoint='get_cafe', methods=["GET"])
+def get_cafe(cafe_id):
     with connection:
         with connection.cursor() as cursor:
-            cursor.execute("SELECT * FROM api_users WHERE id = %s", (user_id,))
-            user = cursor.fetchone()
-            if user:
-                return jsonify({"id": user[0], "name": user[1]})
+            cursor.execute("SELECT * FROM cafe_shops WHERE id = %s", (cafe_id,))
+            cafe_shop = cursor.fetchone()
+            if cafe_shop:
+                return jsonify({"id": cafe_shop[0], "cafe_username": cafe_shop[1], "cafe": cafe_shop[2]})
             else:
-                return jsonify({"error": f"User with ID {user_id} not found."}), 404
+                return jsonify({"error": f"Cafe shop with ID {cafe_id} not found."}), 404
 
 
-@app.route("/update/user-entries/<int:user_id>", endpoint='update_user_entries', methods=["PUT"])
-def update_user_entries(user_id):
+@app.route("/update/cafe-shops/<int:cafe_id>", endpoint='update_cafe_entries', methods=["PUT"])
+def update_cafe_entries(cafe_id):
     data = request.get_json()
-    username = data["username"]
-    name = data["name"]
-    email = data["email"]
-    phone = data["phone"]
+    cafe_username = data["cafe_username"]
+    cafe = data["cafe"]
+    location = data["location"]
+    open = data["open"]
+    close = data["close"]
+    coffee_rating = data["coffee_rating"]
+    wifi_rating = data["wifi_rating"]
+    power_rating = data["power_rating"]
     with connection:
         with connection.cursor() as cursor:
-            cursor.execute(UPDATE_USERNAME_BY_ID, (username, name, email, phone, user_id))
-            if cursor.rowcount == 0:
-                return jsonify({"error": f"User with ID {user_id} not found."}), 404
-    return jsonify({"id": user_id, "username": username, "name": name, "email": email, "phone": phone,
-                    "message": f"User {username} entries updated successfully."})
+            cursor.execute(INSERT_CAFE_SHOP_RETURN_ID, (cafe_username, cafe, location,
+                                                        open, close, coffee_rating, wifi_rating,
+                                                        power_rating))
+        if cursor.rowcount == 0:
+            return jsonify({"error": f"Cafe shop with ID {cafe_id} not found."}), 404
+    return jsonify({"id": cafe_id, "Cafe Username": cafe_username, "Cafe": cafe, "Coffee Rating": coffee_rating,
+                    "Wifi Rating": wifi_rating, "Power Rating": power_rating, "message": f"Cafe shop with cafe username"
+                                                    f"  {cafe_username} entries updated successfully."})
 
-@app.route("/update/username/<int:user_id>", endpoint='update_username_entry', methods=["PATCH"])
-def update_username_entry(user_id):
+@app.route("/update/cafe-shop/<int:cafe_id>", endpoint='update_cafe_username_entry', methods=["PATCH"])
+def update__cafe_username_entry(cafe_id):
     data = request.get_json()
-    username = data["username"]
+    cafe_username = data["cafe_username"]
     with connection:
         with connection.cursor() as cursor:
-            cursor.execute(UPDATE_USERNAME_BY_ID, (username, user_id))
-            if cursor.rowcount == 0:
-                return jsonify({"error": f"User with ID {user_id} not found."}), 404
-    return jsonify({"id": user_id, "username": username, "message": f"User with ID {user_id} and username : {username} updated successfully."})
+            cursor.execute(UPDATE_CAFE_USERNAME_BY_ID, (cafe_id, cafe_username))
+        if cursor.rowcount == 0:
+            return jsonify({"error": f"Cafe shop with ID {cafe_id} not found."}), 404
+    return jsonify({"id": cafe_id, "cafe username": cafe_username, "message": f"Cafe shop with ID {cafe_id} "
+                                f"and cafe_username : {cafe_username} updated successfully."})
 
-@app.route("/update/user-email/<int:user_id>", endpoint='update_email_entry', methods=["PATCH"])
-def update_email_entry(user_id):
+@app.route("/update/cafe-shop/<int:cafe_id>", endpoint='update_location_entry', methods=["PATCH"])
+def update_location_entry(cafe_id):
     data = request.get_json()
-    email = data["email"]
+    location = data["location"]
     with connection:
         with connection.cursor() as cursor:
-            cursor.execute(UPDATE_EMAIL_BY_ID, (email, user_id))
-            if cursor.rowcount == 0:
-                return jsonify({"error": f"User with ID {user_id} not found."}), 404
-    return jsonify({"id": user_id, "email": email, "message": f"User with ID {user_id} and email : {email} updated successfully."})
+            cursor.execute(UPDATE_CAFE_LOCATION_BY_ID, (cafe_id, location))
+        if cursor.rowcount == 0:
+            return jsonify({"error": f"Cafe shop with ID {cafe_id} not found."}), 404
+    return jsonify({"id": cafe_id, "location": location, "message": f"Cafe shop with ID {cafe_id} and "
+                                                                f"location : {location} updated successfully."})
 
 
-@app.route("/update/user-phone/<int:user_id>", endpoint='update_phone_entry', methods=["PATCH"])
-def update_phone_entry(user_id):
+@app.route("/update/cafe-shop/<int:cafe_id>", endpoint='update_open_entry', methods=["PATCH"])
+def update_open_entry(cafe_id):
     data = request.get_json()
-    phone = data["phone"]
+    open = data["open"]
     with connection:
         with connection.cursor() as cursor:
-            cursor.execute(UPDATE_PHONE_BY_ID, (phone, user_id))
+            cursor.execute(UPDATE_CAFE_OPEN_BY_ID, (cafe_id, open))
+        if cursor.rowcount == 0:
+            return jsonify({"error": f"User with ID {cafe_id} not found."}), 404
+    return jsonify({"id": cafe_id, "open": open, "message": f"Cafe shop with ID {cafe_id} "
+                                                        f"and open : {open} updated successfully."})
+
+@app.route("/update/cafe-shop/<int:cafe_id>", endpoint='update_close_entry', methods=["PATCH"])
+def update_close_entry(cafe_id):
+    data = request.get_json()
+    close = data["close"]
+        with connection:
+            with connection.cursor() as cursor:
+                cursor.execute(UPDATE_CAFE_CLOSE_BY_ID, (cafe_id, close))
             if cursor.rowcount == 0:
-                return jsonify({"error": f"User with ID {user_id} not found."}), 404
-    return jsonify({"id": user_id, "phone": phone, "message": f"User with ID {user_id} and email : {phone} updated successfully."})
+                return jsonify({"error": f"Cafe shop with ID {cafe_id} not found."}), 404
+        return jsonify({"id": cafe_id, "close": close, "message": f"User with ID {cafe_id} "
+                                                            f"and close : {close} updated successfully."})
 
-
-@app.route("/delete/user/<int:user_id>", methods=["DELETE"])
-def delete_user(user_id):
+@app.route("/update/cafe-shop/<int:cafe_id>", endpoint='update_coffe_rating_entry', methods=["PATCH"])
+def update_coffee_rating_entry(cafe_id):
+    data = request.get_json()
+    coffee_rating = data["coffee_rating"]
     with connection:
         with connection.cursor() as cursor:
-            cursor.execute(DELETE_USER_BY_ID, (user_id,))
+            cursor.execute(UPDATE_CAFE_COFFE_RATING_BY_ID, (cafe_id, coffee_rating))
+        if cursor.rowcount == 0:
+            return jsonify({"error": f"Cafe shop with ID {cafe_id} not found."}), 404
+    return jsonify({"id": cafe_id, "coffee_rating": coffee_rating, "message": f"Cafe shop ID {cafe_id} "
+                                                        f" and coffee_rating : {coffee_rating} updated successfully."})
+
+@app.route("/update/cafe-shop/<int:cafe_id>", endpoint='update_wifi_rating_entry', methods=["PATCH"])
+def update_wifi_rating_entry(cafe_id):
+    data = request.get_json()
+    wifi_rating = data["wifi_rating"]
+    with connection:
+        with connection.cursor() as cursor:
+            cursor.execute(UPDATE_CAFE_WIFI_RATING_BY_ID, (cafe_id, wifi_rating))
+        if cursor.rowcount == 0:
+            return jsonify({"error": f"Cafe shop with ID {cafe_id} not found."}), 404
+    return jsonify({"id": cafe_id, "wifi_rating": wifi_rating, "message": f"Cafe shop with ID {cafe_id} "
+                                                        f"and Wifi rating : {wifi_rating} updated successfully."})
+
+@app.route("/update/cafe-shop/<int:cafe_id>", endpoint='update_power_rating_entry', methods=["PATCH"])
+def update_power_rating_entry(cafe_id):
+    data = request.get_json()
+    power_rating = data["wifi_rating"]
+    with connection:
+        with connection.cursor() as cursor:
+            cursor.execute(UPDATE_CAFE_POWER_RATING_BY_ID, (cafe_id, power_rating))
+        if cursor.rowcount == 0:
+            return jsonify({"error": f"Cafe shop with ID {cafe_id} not found."}), 404
+    return jsonify({"id": cafe_id, "power_rating": power_rating, "message": f"Cafe shop with ID {cafe_id} "
+                                                        f"and open : {power_rating} updated successfully."})
+@app.route("/delete/cafe-shop/<int:cafe_id>", methods=["DELETE"])
+def delete_user(cafe_id):
+    with connection:
+        with connection.cursor() as cursor:
+            cursor.execute(DELETE_CAFE_SHOP_BY_ID, (cafe_id,))
             if cursor.rowcount == 0:
-                return jsonify({"error": f"User with ID {user_id} not found."}), 404
-    return jsonify({"message": f"User with ID {user_id} deleted."})
+                return jsonify({"error": f"User with ID {cafe_id} not found."}), 404
+    return jsonify({"message": f"Cafe shop with ID {cafe_id} deleted."})
 
 
 if __name__ == '__main__':
